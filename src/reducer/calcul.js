@@ -2,17 +2,48 @@ import { ADD, DIVIDE, EQUAL, MULTIPLY, CLEAR, SUBTRACT, UPDATE } from "../consta
 
 const stateInit = {
 	display: '',
-	accumulated: 0,
+	// accumulated: 0,
+	operations_queue: [],
 	operations: [
 		{ type: ADD, display: '+' },
 		{ type: SUBTRACT, display: '-' },
 		{ type: MULTIPLY, display: 'x' },
 		{ type: DIVIDE, display: '/' },
+		{ type: EQUAL, display: '=' },
 	],
-	numbers: [...Array(10).keys()]
+	numbers: [...Array(10).keys()],
 };
 
-const reducer = (state = stateInit, action = {}) => {
+function operate(operator, nb_a, nb_b) {
+	if (operator === '+') {
+		return nb_a + nb_b;
+	}
+	else if (operator === '-') {
+		return nb_a - nb_b;
+	}
+	else if (operator === '*') {
+		return nb_a * nb_b;
+	}
+	else if (operator === '/') {
+		return nb_a / nb_b;
+	}
+}
+
+function addQueue(current, items = []) {
+	let queue = [...current, ...items];
+
+	while (queue.length >= 3) {
+		const result = operate(queue[1], queue[0], queue[2]);
+		queue.shift();
+		queue.shift();
+		queue.shift();
+		queue.unshift(result);
+	}
+	return queue;
+}
+
+
+export default function reducer(state = stateInit, action = {}) {
 	const { type } = action;
 	if (type === UPDATE) {
 		const input = action.payload;
@@ -20,23 +51,29 @@ const reducer = (state = stateInit, action = {}) => {
 		return { ...state, display };
 	}
 	else if (type === CLEAR) {
-		return { ...state, display: '0' };
+		return { ...state, display: '' };
 	}
 	else if (type === ADD) {
-		return state;
+		const operations_queue = addQueue(state.operations_queue, [parseInt(state.display), '+']);
+		return { ...state, operations_queue };
 	}
 	else if (type === SUBTRACT) {
-		return state;
+		const operations_queue = addQueue(state.operations_queue, [parseInt(state.display), '-']);
+		return { ...state, operations_queue };
 	}
 	else if (type === MULTIPLY) {
-		return state;
+		const operations_queue = addQueue(state.operations_queue, [parseInt(state.display), '*']);
+		return { ...state, operations_queue };
 	}
 	else if (type === DIVIDE) {
-		return state;
+		const operations_queue = addQueue(state.operations_queue, [parseInt(state.display), '/']);
+		return { ...state, operations_queue };
 	}
 	else if (type === EQUAL) {
-		return state;
+		let operations_queue = addQueue(state.operations_queue, [parseInt(state.display)]);
+		const display = operations_queue[0];
+		operations_queue = [];
+		return { ...state, operations_queue, display };
 	}
 	else return state;
 };
-export default reducer;
